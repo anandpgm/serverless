@@ -99,7 +99,7 @@ pipeline {
 }
             
 def getAwsCredentials(env) {
-    def devAwsCredentialId = 'xxxxxxxxxxxxxxxxxxxx'
+    def devAwsCredentialId = 'xxxxxxxxxxxxxxxxxxxxxx'
     def proAwsCredentialId = 'xxxxxxxxxxxxxxxxxxxxxx'
 
     [[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: env == "pro" ? proAwsCredentialId : devAwsCredentialId, secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]
