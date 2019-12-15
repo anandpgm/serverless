@@ -1,0 +1,106 @@
+pipeline {
+    agent {
+        docker {
+            label "docker"
+            image "node:10"
+            args "-u 0:0"
+        }
+    }
+   
+    stages {
+        stage("SCM") {            
+            steps {
+                checkout scm                
+            }
+        }
+
+        stage('Setup SLS environment') {
+            steps {
+                sh 'node --version'
+                sh 'npm --version'
+                sh 'npm install -g serverless'
+                sh 'npm list -g serverless'
+                sh 'npm install -g typescript' 
+                sh 'npm install --save bluebird'
+                sh 'npm install --save uuid'           
+            }
+        }
+        // stage('Install dependencies') {
+        //     steps {
+        //         sh '''cd src/lib/paladin-evaluate-policy
+        //             npm install
+        //             cd ../../..
+        //             '''
+        //         sh 'npm install'
+        //         sh '''cd src
+        //             npm install --only=prod'''
+                
+        //     }
+        // }
+        // stage('DeployProd') {
+        //    when {
+         //       branch 'prod'
+         //   }
+        //    steps {
+                // sh "serverless create_domain --stage prod"
+                // sh "sls deploy --stage prod"
+        //    }
+        // }
+        stage('DeployDev') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                        withCredentials(getAwsCredentials("dev")) {
+                            // sh "serverless create_domain --stage dev"
+                            //sh "sls deploy --stage dev" 
+                            sh "sls deploy"
+                                
+                        }
+                }
+            }
+        }
+        // stage('DeployStaging') {
+        //     when {
+        //         branch 'staging'
+        //     }
+        //     steps {
+        //         script {
+        //                 withCredentials(getAwsCredentials("itg")) {
+        //                     // sh "serverless create_domain --stage itg"
+        //                     sh "sls deploy --stage itg"
+        //                     // sh "echo **** SKIP ******"
+        //                 }
+        //         }
+        //     }
+        // }
+
+        // stage('FeatureBranchToDev') {
+        //     when {
+        //         not {
+        //             anyOf {
+        //                 branch 'prod';
+        //                 branch 'staging';
+        //                 branch 'itg'; 
+        //                 branch 'master';                           
+        //             }
+        //         }
+        //     }
+
+        // }        
+    }
+
+    post {        
+        success {
+            archiveArtifacts allowEmptyArchive: true, artifacts: '**/.serverless/*', fingerprint: true            
+        }
+    }
+}
+            
+def getAwsCredentials(env) {
+    def devAwsCredentialId = 'xxxxxxxxxxxxxxxxxxxx'
+    def proAwsCredentialId = 'xxxxxxxxxxxxxxxxxxxxxx'
+
+    [[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: env == "pro" ? proAwsCredentialId : devAwsCredentialId, secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]
+}
